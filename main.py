@@ -19,7 +19,22 @@ def get_item_price(url):
             context = soup.find_all('span')[settings[1][x]].text
             result.append(context)
         if x == 2:
-            return(f'{result[0]} || {result[1]} || {result[2]}')
+            #buy price
+            start_pos = result[1].index('€')
+            buy_price = result[1][start_pos+1::]
+
+            if ' ' in buy_price:
+                buy_price = buy_price.replace(' ', '')
+
+            #sell price
+            start_pos = result[2].index('€')
+            end_pos = result[2].index('or')
+            sell_price = result[2][start_pos+1:end_pos:]
+
+            if ' ' in sell_price:
+                sell_price  = sell_price.replace(' ', '')
+
+            return (f'{result[0]} || {result[1]} || {result[2]}'), (float(buy_price.replace(',', '.')), float(sell_price.replace(',', '.')))
 
 
 def get_urls_from_file(path):
@@ -50,17 +65,29 @@ if __name__ == "__main__":
 
         if option == 1:
             url = input('URL >>>')
-            print(get_item_price(url))
+            print(get_item_price(url)[0])
         elif option == 2:
             while True:
                 path = input('Path >>>')
                 try:
                     items_from_file = get_urls_from_file(path)
+
+                    all_to_buy = 0.0
+                    all_to_sell = 0.0
+
                     for item in items_from_file:
                         try:
-                            print(get_item_price(item))
-                        except Exception:
+                            obj_func_get_item = get_item_price(item)
+                            print(obj_func_get_item[0])
+                            all_to_buy = all_to_buy + obj_func_get_item[1][0]
+                            all_to_sell = all_to_sell + obj_func_get_item[1][1]
+
+
+                        except Exception as e:
+                            print(e)
                             print(f'Unable to open link <{item}> SKIPPING')
+
+                    print(f'Price for all items to buy: €{all_to_buy.__round__(2)}, Price for all items to sell (with out steam market fee): €{all_to_sell.__round__(2)}')
                     break
                 except Exception:
                     print('Enter valid path to file')
